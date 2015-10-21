@@ -27,6 +27,9 @@ class FW_Option_Type_Style extends FW_Option_Type {
 				'links'       => 'Links',
 				'links_hover' => 'Links Hover'
 			),
+			'colors'					=> array(
+				'accent'			=> 'Accent Color'
+			),
 			'default_values'  => array(
 				'typography' => array(
 					'h1' => array(
@@ -81,6 +84,9 @@ class FW_Option_Type_Style extends FW_Option_Type {
 						'primary'   => '#ffffff',
 						'secondary' => '#ffffff',
 					)
+				),
+				'colors'	=> array(
+					'accent'	=> '#4eaade'
 				)
 			)
 		);
@@ -183,6 +189,10 @@ class FW_Option_Type_Style extends FW_Option_Type {
 			foreach ( array_intersect( array_values( $block_settings['elements'] ), array_keys( self::$settings['links'] ) ) as $element ) {
 				$option['value'][ $block_id ][ $element ] = ( ! empty( $option['value'][ $block_id ][ $element ] ) && preg_match( '/^#[a-f0-9]{6}$/i', $option['value'][ $block_id ][ $element ] ) ) ? $option['value'][ $block_id ][ $element ] : self::$settings['default_values']['links'][ $element ];
 			}
+			//Colors
+			foreach ( array_intersect( array_values( $block_settings['elements'] ), array_keys( self::$settings['colors'] ) ) as $element ) {
+				$option['value'][ $block_id ][ $element ] = ( ! empty( $option['value'][ $block_id ][ $element ] ) && preg_match( '/^#[a-f0-9]{6}$/i', $option['value'][ $block_id ][ $element ] ) ) ? $option['value'][ $block_id ][ $element ] : self::$settings['default_values']['colors'][ $element ];
+			}
 			if ( in_array( 'background', $block_settings['elements'] ) ) {
 				$option['value'][ $block_id ]['background']['background-color']['primary']   = ( ! empty( $option['value'][ $block_id ]['background']['background-color']['primary'] ) && preg_match( '/^#[a-f0-9]{6}$/i', $option['value'][ $block_id ]['background']['background-color']['primary'] ) ) ? $option['value'][ $block_id ]['background']['background-color']['primary'] : self::$settings['default_values']['background']['background-color']['primary'];
 				$option['value'][ $block_id ]['background']['background-color']['secondary'] = ( ! empty( $option['value'][ $block_id ]['background']['background-color']['secondary'] ) && preg_match( '/^#[a-f0-9]{6}$/i', $option['value'][ $block_id ]['background']['background-color']['secondary'] ) ) ? $option['value'][ $block_id ]['background']['background-color']['secondary'] : self::$settings['default_values']['background']['background-color']['secondary'];
@@ -222,9 +232,13 @@ class FW_Option_Type_Style extends FW_Option_Type {
 						'value' => $option['value'][ $block_id ][ $tag ]
 					), $tag_settings );
 				} elseif ( in_array( $tag, array_keys( self::$settings['links'] ) ) ) { //Links
-					$tag_settings = fw()->backend->option_type( 'color-picker' )->get_value_from_input( array(
-						'value' => $option['value'][ $block_id ][ $tag ]
-					), $tag_settings );
+					$tag_settings = fw()->backend->option_type('color-picker')->get_value_from_input(array(
+						'value' => $option['value'][$block_id][$tag]
+					), $tag_settings);
+				} elseif ( in_array( $tag, array_keys( self::$settings['colors'] ) ) ) { //Colors
+					$tag_settings = fw()->backend->option_type('color-picker')->get_value_from_input(array(
+						'value' => $option['value'][$block_id][$tag]
+					), $tag_settings);
 				} elseif ( $tag === 'background' && ! empty( $tag_settings ) ) { //Background
 					$tag_settings['background-color'] ['primary'] = fw()->backend->option_type( 'color-picker' )->get_value_from_input( array(
 						'value' => $option['value'][ $block_id ]['background']['background-color']['primary']

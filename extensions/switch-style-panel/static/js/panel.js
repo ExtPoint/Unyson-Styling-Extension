@@ -2,11 +2,11 @@
 (function ($) {
 
 	$(".open-close-panel").click(function () {
-		if ($(this).parent('.wrap-style-panel').hasClass('close')) {
-			$(this).parent('.wrap-style-panel').removeClass('close').addClass('open');
+		if ($(this).parent('.wrap-style-panel').hasClass('closed')) {
+			$(this).parent('.wrap-style-panel').removeClass('closed').addClass('open');
 		}
 		else {
-			$(this).parent('.wrap-style-panel').removeClass('open').addClass('close');
+			$(this).parent('.wrap-style-panel').removeClass('open').addClass('closed');
 		}
 		return false;
 	});
@@ -17,7 +17,12 @@
 			loadedGoogleFonts = [];
 
 		(function init() {
-			$panel.on('click', 'ul.list-style li a', applyStyle);
+			$panel.find('ul.list-style li a').on('click', applyStyle);
+
+            if (fwUseCookie == true) {
+                var presetName = getCookie(fwSwitchStylePanel['cache_key']);
+                $panel.find('ul.list-style li a[data-key=' + presetName  +']').click();
+            }
 		})();
 
 		function applyStyle(event) {
@@ -27,7 +32,8 @@
 				blockSettings,
 				tags = {
 					typography: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'],
-					links: ['links', 'links_hover']
+					links: ['links', 'links_hover'],
+					colors: ['accent', 'accentColor']
 				};
 
 			for (var blockId in settings['blocks']) {
@@ -38,12 +44,16 @@
 					}
 					$.each(blockSettings, function (tag, tagSettings) {
 						selectors = checkSelector(blocks[blockId]['css_selector']);
+
 						if ($.inArray(tag, blocks[blockId]['elements']) !== -1) {
 							if ($.inArray(tag, tags['typography']) !== -1) {
 								css += generateTypographyCss(selectors, tag, tagSettings);
 							}
 							else if ($.inArray(tag, tags.links) !== -1) {
 								css += generateLinksCss(selectors, tag, tagSettings);
+							}
+							else if ($.inArray(tag, tags.colors) !== -1) {
+								css += generateAccentCss(tagSettings);
 							}
 							else if (tag === 'background') {
 								css += generateBackgroundCss(selectors, tagSettings);
@@ -52,9 +62,31 @@
 					});
 				}
 			}
-			$('style[data-rel="' + fwSwitchStylePanel['cache_key'] + '"]').remove();
-			$panel.after('<style data-rel="' + fwSwitchStylePanel['cache_key'] + '" type="text/css">' + css + '</style>');
-			setCookie(fwSwitchStylePanel['cache_key'], $(event.target).attr('data-key'));
+
+            var data = $(event.target).attr('data-key');
+
+            // set page style
+            $('style[data-rel="' + fwSwitchStylePanel['cache_key'] + '"]').remove();
+            $panel.after('<style data-rel="' + fwSwitchStylePanel['cache_key'] + '" type="text/css">' + css + '</style>');
+
+            // save cookie for demo mode
+            if (fwUseCookie == true) {
+                setCookie(fwSwitchStylePanel['cache_key'], data);
+            } else if (fwIsAdmin == true) {
+                // save data
+                jQuery.ajax({
+                    url: ajax_path,
+                    type: 'POST',
+                    data: {
+                        action: 'save_style',
+                        style: data
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                    }
+                });
+            }
+
 			return false;
 		}
 
@@ -105,6 +137,48 @@
 			return css;
 		}
 
+		function generateAccentCss(color){
+			var css = '';
+			var selectors = [
+				'a.button, .contact-form input[type=submit] { background-color: {color};}',
+				'a.button:active, a.button:hover, .contact-form input[type=submit]:active, .contact-form input[type=submit]:hover {background-color: {color};}',
+				'a.button.button-inverted {color: {color} !important; border-color: {color} !important;}',
+				'.button {background-color: {color};}',
+				'.button:active, .button:hover {background-color: {color};}',
+				'.button.button-inverted {color: {color} !important; border-color: {color} !important;}',
+				'.button.button-inverted a{color: {color} !important; border-color: {color} !important;}',
+				'.nav-menu-hiddens {border-top-color: {color} !important;}',
+				'.sub-menu {border-top-color: {color} !important;}',
+				'.unordered li:before {color: {color};}',
+				'.ordered li:before {color: {color};}',
+				'.nav-menu .sub-menu li a:hover:before{border-color: transparent transparent transparent {color};}',
+				'.fw-testimonials .fw-testimonials-pagination a.selected {background-color: {color};}',
+				'.fw-accordion .fw-accordion-title.ui-state-active {color: {color};}',
+				'.fw-accordion .fw-accordion-title.ui-state-active:after {color: {color};}',
+				'.nav-dots .item.active {background-color: {color};}',
+				'.latest-blog-post .thumb-container .date .item.day {color: {color};}',
+				'.latest-blog-post .thumb-container .date:before {  border-color: #fff {color} {color} #fff;}',
+				'.fw-team-member-image.active{  box-shadow: 0 0 0 7px {color}, 0 0 0 1px #e5e5e5;}',
+				'.fw-subscribe-content:before{color: {color}; }',
+				'.portfolio-tabs .item.active {background-color: {color}; }',
+				'.portfolio-tabs .item.active:after {  border-color: {color} transparent transparent transparent;}',
+				'.fw-pricing .fw-package-wrap.highlight-col .fw-heading-row {background: {color}}',
+				'.fw-package .fw-pricing-row span {color: {color}; }',
+				'.btn-group button[data-calendar-nav] {color: {color}; }',
+				'.cal-day-today {background-color: {color}; }',
+				'.cal-month-day:hover span.pull-left {color: {color}; !important;}',
+				'a:hover{color: {color};}',
+				'.mightyslider_carouselSimple_skin .mSButtons, .mightyslider_carouselSimple_skin .mSButtons:hover {background-color: {color}}'
+			];
+
+			if (typeof color === 'string' && isValidColor(color)) {
+				$.each(selectors, function(index, selector){
+					css += selector.replace(/\{color\}/g, color);
+				});
+			}
+			return css;
+		}
+
 		function generateBackgroundCss(selectors, options) {
 			var css = '', fallback = '', bgImageCss = '';
 			$.each(selectors, function (index, selector) {
@@ -146,6 +220,13 @@
 			var c_value = value + ((exdays == null) ? "" : "; expires=" + exdate.toUTCString() + "; path=/;");
 			document.cookie = c_name + "=" + c_value;
 		}
+
+        function getCookie(c_name) {
+            var matches = document.cookie.match(new RegExp(
+                "(?:^|; )" + c_name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+            ));
+            return matches ? decodeURIComponent(matches[1]) : undefined;
+        }
 
 		function checkSelector(selector) {
 			if (typeof selector === 'string') {

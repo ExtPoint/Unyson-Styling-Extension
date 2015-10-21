@@ -13,31 +13,28 @@ class FW_Extension_Switch_Style_Panel extends FW_Extension {
 	 */
 	public function _init() {
 
-		if ( is_admin() ) {
-			$this->add_admin_filters();
-		}else {
-			$this->check_settings();
-		}
+		return;
+		
+		// if(!defined('WP_DEMO')){
+		// 	define('WP_DEMO', true);
+		// }
+
+		// if ( WP_DEMO === true ){
+		// 	$this->check_settings();
+		// }
+
+		// if ( WP_DEMO === false && $this->check_admin() ){
+		// 	$this->admin_check_settings();
+		// } else {
+		// 	return;
+		// }
 	}
 
-	private function add_admin_filters(){
-		add_filter( 'fw_ext_styling_settings_options', array($this, '_filter_add_config_options'));
-	}
-
-	/**
-	 * Add options in dashboard
-	 * @param $options
-	 * @internal
-	 * @return array
-	 */
-	public function _filter_add_config_options($options){
-		return array_merge($options, $this->get_options('settings'));
+	public function check_admin(){
+		return (is_admin() || !is_admin() && current_user_can( 'manage_options' ));
 	}
 
 	protected function check_settings() {
-		if ( ! fw_get_db_ext_settings_option($this->get_parent()->get_name(), 'switch_style_panel_display') ) {
-			return;
-		}
 		$theme_options = fw_extract_only_options( $this->get_parent()->get_options('appearance-settings') );
 		$options       = false;
 
@@ -61,6 +58,50 @@ class FW_Extension_Switch_Style_Panel extends FW_Extension {
 		add_action( 'wp_footer', array( $this, '_theme_action_print_styling_switcher' ), 10 );
 	}
 
+	protected function admin_check_settings(){
+		$theme_options = fw_extract_only_options( $this->get_parent()->get_options('appearance-settings') );
+		$options       = false;
+
+		foreach ( $theme_options as $option_name => $option_settings ) {
+			if ( $option_settings['type'] !== 'style' ) {
+				unset ( $theme_options[ $option_name ] );
+				continue;
+			}
+			$options = $option_settings;
+			break;
+		}
+
+		if ( ! empty( $options['predefined'] ) ) {
+			$this->options = $options;
+			$this->admin_add_theme_actions();
+		}
+	}
+
+	protected function admin_add_theme_actions() {
+		add_action( 'wp_ajax_save_style', array( $this, '_admin_action_generate_css') );
+		add_action( 'wp_head', array( $this, '_localize_script' ), 0);
+		add_action( 'wp_head', array( $this, '_theme_action_print_css' ), 99 );
+		add_action( 'wp_footer', array( $this, '_theme_action_print_styling_switcher' ), 10 );
+	}
+
+	public function _localize_script(){
+		echo '<script type="text/javascript">var ajax_path = "' . admin_url('admin-ajax.php') . '"; </script>';
+	}
+
+	public function _theme_action_print_css() {
+		$css = fw_get_db_extension_data( $this->get_parent()->get_name(), 'css' );
+		if ( ! empty( $css ) ) {
+			echo $css;
+		}
+	}
+
+	public function _admin_action_generate_css() {
+		$stored_style = htmlspecialchars($_POST['style']);
+		fw_set_db_extension_data( $this->get_parent()->get_name(), 'css', $this->generate_initial_css( $this->options['blocks'], $this->options['predefined'][ $stored_style ] ) );
+		fw_set_db_extension_data( $this->get_parent()->get_name(), 'options', array('theme_style' => array('predefined' => $stored_style)));
+		wp_die();
+	}
+
 	/**
 	 * @internal
 	 */
@@ -74,7 +115,7 @@ class FW_Extension_Switch_Style_Panel extends FW_Extension {
 	private function generate_initial_css( $blocks, $style_options ) {
 		$data = FW_Switch_Style_Panel_Css_Generator::get_css( $blocks, $style_options );
 		$css  = $data['google_fonts'];
-		$css .= '<style data-rel="' . $this->cache_key . '" type="text/css">' . $data['css'] . '</style>';
+		$css .= '<style data-rel="' . $this->cache_key . '" type="text/css">' . $data['css']  . '</style>';
 
 		return $css;
 	}
@@ -106,6 +147,8 @@ class FW_Extension_Switch_Style_Panel extends FW_Extension {
 
 			wp_localize_script( 'fw-ext-' . $this->get_name(), 'fwGoogleFonts', fw_get_google_fonts() );
 			wp_localize_script( 'fw-ext-' . $this->get_name(), 'fwSwitchStylePanel', array( 'cache_key' => $this->cache_key ) );
+			wp_localize_script( 'fw-ext-' . $this->get_name(), 'fwIsAdmin', array( is_admin() || !is_admin() && current_user_can( 'manage_options' )));
+			wp_localize_script( 'fw-ext-' . $this->get_name(), 'fwUseCookie', array( WP_DEMO === true ));
 		}
 
 	}

@@ -7,6 +7,7 @@ class FW_Switch_Style_Panel_Css_Generator {
 	private static $tags = array(
 		'typography' => array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p' ),
 		'links'      => array( 'links', 'links_hover' ),
+		'colors'		 => array( 'accent' )
 	);
 
 	private static $initialized = false;
@@ -40,10 +41,12 @@ class FW_Switch_Style_Panel_Css_Generator {
 			$block_elements = (array) $block_settings['elements'];
 
 			foreach ( $block_elements as $element ) {
-				if ( in_array( $element, self::$tags['typography'] ) ) {
+				if ( in_array( $element, self::$tags['typography'] ) && isset($style_options[ $block_id ][ $element ]) ) {
 					$css .= self::generate_typography_css( $css_selectors, $element, $style_options[ $block_id ][ $element ] );
 				} elseif ( in_array( $element, self::$tags['links'] ) ) {
 					$css .= self::generate_links_css( $css_selectors, $element, $style_options[ $block_id ][ $element ] );
+				} elseif ( in_array( $element, self::$tags['colors'] ) ) {
+					$css .= self::generate_colors_css( $css_selectors, $element, $style_options[ $block_id ][ $element ] );
 				} elseif ( $element === 'background' ) {
 					$css .= self::generate_background_css( $css_selectors, $style_options[ $block_id ][ $element ] );
 				}
@@ -108,6 +111,19 @@ class FW_Switch_Style_Panel_Css_Generator {
 			return $css;
 		}
 		$tag = ( $tag === 'links' ) ? 'a' : 'a:hover';
+		foreach ( $selectors as $selector ) {
+			$css .= $selector . ' ' . $tag . '{color: ' . $color . '}';
+		}
+
+		return $css;
+	}
+
+	private static function generate_colors_css( $selectors, $tag, $color ) {
+		$css = '';
+		if ( ! is_string( $color ) || ! self::is_valid_hex_color( $color ) ) {
+			return $css;
+		}
+		$tag = ( $tag === 'accent' ) ? '.accent' : '.accent';
 		foreach ( $selectors as $selector ) {
 			$css .= $selector . ' ' . $tag . '{color: ' . $color . '}';
 		}

@@ -108,6 +108,39 @@
 				<?php
 				endforeach;
 
+				// Colors
+				foreach ( array_intersect( array_values( $elements ), array_keys( $settings['colors'] ) ) as $color ): ?>
+					<div class="fw-option-type-style-option color <?php echo esc_attr($color); ?>" data-css-selector="<?php echo $color; ?>">
+						<?php
+						$tmp_options = array(
+							$color => array(
+								'type'  => 'color-picker',
+								'label' => $settings['colors'][ $color ],
+								'desc'  => false,
+							)
+						);
+
+						$tmp_values = array(
+							$color => ( ! empty( $data['value']['blocks'][ $block_id ][ $color ] ) )
+								? $data['value']['blocks'][ $block_id ][ $color ]
+								: $option['value'][ $block_id ][ $color ]
+						);
+
+						echo fw()->backend->render_options(
+							$tmp_options,
+							$tmp_values,
+							array(
+								'id_prefix'   => $data['id_prefix'] . $id . '-styling-option-',
+								'name_prefix' => $data['name_prefix'] . '[' . $id . ']' . '[' . $block_id . ']',
+							)
+						);
+
+						unset($tmp_options, $tmp_values);
+						?>
+					</div>
+				<?php
+				endforeach;
+
 				// Background
 				if ( in_array( 'background', $elements ) ):
 					?>

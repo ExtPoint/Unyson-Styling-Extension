@@ -10,4 +10,4 @@ $manifest['version']     = '1.0.3';
 $manifest['display']     = true;
 $manifest['standalone']  = true;
 
-$manifest['github_update'] = 'ThemeFuse/Unyson-Styling-Extension';
+$manifest['github_update'] = '';

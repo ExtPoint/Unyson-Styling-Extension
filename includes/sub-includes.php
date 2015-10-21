@@ -2,4 +2,4 @@
 	die( 'Forbidden' );
 }
 
-require_once dirname( __FILE__ ) . '/option-types/style/class-fw-option-type-style.php';
+require_once dirname(__FILE__) . '/option-types/style/class-fw-option-type-style.php';

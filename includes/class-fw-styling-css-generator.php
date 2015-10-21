@@ -10,6 +10,9 @@ class FW_Styling_Css_Generator {
 			'links'       => 'a',
 			'links_hover' => 'a:hover'
 		),
+		'colors'		 => array(
+			'accent'	=> '.accent'
+		)
 	);
 
 	private static $initialized = false;
@@ -63,6 +66,14 @@ class FW_Styling_Css_Generator {
 			foreach ( $links as $link ) {
 				foreach ( $css_selectors as $selector ) {
 					$css .= $selector . ' ' . self::$tags['links'][ $link ] . "{ color: " . $saved_settings['blocks'][ $block_id ][ $link ] . ";}\n";
+				}
+			}
+
+			//Colors
+			$colors = array_intersect( $block_elements, array_keys( self::$tags['colors'] ) );
+			foreach ( $colors as $color ) {
+				foreach ( $css_selectors as $selector ) {
+					$css .= $selector . ' ' . self::$tags['colors'][ $color ] . "{ color: " . $saved_settings['blocks'][ $block_id ][ $color ] . ";}\n";
 				}
 			}
 

@@ -68,6 +68,9 @@
 				if (index === 'background') {
 					fwOptionTypeStyle.setBackgroundOption($container, item);
 				}
+				else if (index === 'accent') {
+					$element.find('input.fw-option-type-color-picker.initialized').iris('color', item);
+				}
 				else if ($element.length == 1) {
 					if (typography.hasOwnProperty(index)) {
 						fwOptionTypeStyle.setTypographyOptions($element, item);
