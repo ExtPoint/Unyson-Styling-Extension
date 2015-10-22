@@ -33,6 +33,11 @@ class FW_Extension_Styling extends FW_Extension {
 
 	}
 
+	public function get_prefix(){
+		$theme_name = preg_replace('/-[0-9]+$/', '', wp_get_theme()->get_stylesheet());
+		return $theme_name . '_';
+	}
+
 	/**
 	 * @return string
 	 */
@@ -97,7 +102,7 @@ class FW_Extension_Styling extends FW_Extension {
 			)
 		);
 
-		$values = FW_Request::POST( FW_Option_Type::get_default_name_prefix(), fw_get_db_extension_data( $this->get_name(), 'options' ) );
+		$values = FW_Request::POST( FW_Option_Type::get_default_name_prefix(), fw_get_db_extension_data( $this->get_name(), $this->get_prefix() . 'options' ) );
 
 		echo fw()->backend->render_options( $options, $values );
 
@@ -125,7 +130,7 @@ class FW_Extension_Styling extends FW_Extension {
 	 * @internal
 	 */
 	public function _form_save( $data ) {
-		fw_set_db_extension_data( $this->get_name(), 'options', fw_get_options_values_from_input( $this->get_options('appearance-settings') ) );
+		fw_set_db_extension_data( $this->get_name(), $this->get_prefix() . 'options', fw_get_options_values_from_input( $this->get_options('appearance-settings') ) );
 
 		do_action( 'fw_' . $this->get_name() . '_form_save' );
 
@@ -160,9 +165,9 @@ class FW_Extension_Styling extends FW_Extension {
 	 */
 	public function _admin_action_generate_css() {
 		$theme_options         = fw_extract_only_options( $this->get_options('appearance-settings') );
-		$saved_data            = fw_get_db_extension_data( $this->get_name(), 'options' );
+		$saved_data            = fw_get_db_extension_data( $this->get_name(), $this->get_prefix() . 'options' );
 		$css_for_style_options = FW_Styling_Css_Generator::get_css( $theme_options, $saved_data );
-		fw_set_db_extension_data( $this->get_name(), 'css', $css_for_style_options );
+		fw_set_db_extension_data( $this->get_name(), $this->get_prefix() . 'css', $css_for_style_options );
 	}
 
 	/**
@@ -170,7 +175,7 @@ class FW_Extension_Styling extends FW_Extension {
 	 * @internal
 	 */
 	public function _theme_action_print_css() {
-		$css = fw_get_db_extension_data( $this->get_name(), 'css' );
+		$css = fw_get_db_extension_data( $this->get_name(), $this->get_prefix() . 'css' );
 		if ( ! empty( $css ) ) {
 			echo $css;
 		}
